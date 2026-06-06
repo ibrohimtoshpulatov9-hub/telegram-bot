@@ -1,23 +1,10 @@
 import telebot
 import yt_dlp
 import os
-import re
 
-import os
 TOKEN = os.environ.get("TOKEN")
 
 bot = telebot.TeleBot(TOKEN)
-
-def is_video_link(text):
-    return bool(re.search(r'(https?://)?(www\.)?(youtube\.com|youtu\.be|instagram\.com)', text.lower()))
-
-
-def find_file(prefix):
-    for f in os.listdir('.'):
-        if f.startswith(prefix):
-            return f
-    return None
-
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -28,31 +15,29 @@ def start(message):
 
 @bot.message_handler(func=lambda message: True)
 def download(message):
-    link = message.text.strip()
+    link = message.text
 
-    if not link:
-        bot.send_message(message.chat.id, "❌ Iltimos, video yoki musiqa nomini yuboring.")
-        return
-
-    if is_video_link(link):
+    if "youtube.com" in link or "youtu.be" in link or "instagram.com" in link:
         bot.send_message(message.chat.id, "⏳ Video yuklanmoqda, kuting...")
         try:
             ydl_opts = {
                 'format': 'best[ext=mp4]/best',
-                'outtmpl': 'video_%(id)s.%(ext)s',
+                'outtmpl': 'video.%(ext)s',
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([link])
 
-            video_file = find_file('video_')
+            video_file = None
+            for f in os.listdir('.'):
+                if f.startswith('video.'):
+                    video_file = f
+                    break
 
             if video_file:
                 bot.send_message(message.chat.id, "📤 Yuborilmoqda...")
                 with open(video_file, 'rb') as v:
                     bot.send_video(message.chat.id, v)
                 os.remove(video_file)
-            else:
-                bot.send_message(message.chat.id, "❌ Video topilmadi.")
 
         except Exception as e:
             bot.send_message(message.chat.id, "❌ Xatolik yuz berdi!")
@@ -62,22 +47,24 @@ def download(message):
         try:
             ydl_opts = {
                 'format': 'bestaudio/best',
-                'outtmpl': 'music_%(id)s.%(ext)s',
+                'outtmpl': 'music.%(ext)s',
                 'default_search': 'ytsearch1',
                 'noplaylist': True,
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([link])
 
-            music_file = find_file('music_')
+            music_file = None
+            for f in os.listdir('.'):
+                if f.startswith('music.'):
+                    music_file = f
+                    break
 
             if music_file:
                 bot.send_message(message.chat.id, "📤 Yuborilmoqda...")
                 with open(music_file, 'rb') as m:
                     bot.send_audio(message.chat.id, m)
                 os.remove(music_file)
-            else:
-                bot.send_message(message.chat.id, "❌ Musiqa topilmadi.")
 
         except Exception as e:
             bot.send_message(message.chat.id, f"❌ Xatolik: {e}")
