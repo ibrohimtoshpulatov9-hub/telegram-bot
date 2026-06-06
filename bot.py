@@ -3,7 +3,8 @@ import yt_dlp
 import os
 import re
 
-TOKEN = "8616732455:AAF0wf-2zSCUVr8HTvi6KwW-y1TpaiYW2tg"
+import os
+TOKEN = os.environ.get("TOKEN")
 
 bot = telebot.TeleBot(TOKEN)
 
